@@ -8,6 +8,8 @@ Every command names the repo explicitly. This repo is a fork of `mattpocock/skil
 
 Write multi-line bodies to a temp file outside the repo and pass it with `-F body=@<file>`.
 
+List and summary endpoints can lag a few seconds behind your own writes. Right after a write, trust the write's response or a direct read of the single issue, not a listing.
+
 ## Conventions
 
 - **Check the repo**: `gh api repos/FJR-Data/matt-pocock-skills --jq '{full_name, has_issues}'`. `has_issues` must be `true` before the first write of a session.
@@ -17,7 +19,7 @@ Write multi-line bodies to a temp file outside the repo and pass it with `-F bod
 - **Edit an issue body**: `gh api -X PATCH repos/FJR-Data/matt-pocock-skills/issues/<n> -F body=@<file>`.
 - **Make an issue a sub-issue of a parent**: `gh api -X POST repos/FJR-Data/matt-pocock-skills/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>`, where `<child-db-id>` is the child's numeric database id (`gh api repos/FJR-Data/matt-pocock-skills/issues/<n> --jq .id`), not its `#number`. List a parent's children with `gh api 'repos/FJR-Data/matt-pocock-skills/issues/<parent>/sub_issues?per_page=100'`. Without sub-issues, put `Part of #<parent>` at the top of the child body.
 - **Blocking**: GitHub's native issue dependencies. Add an edge with `gh api -X POST repos/FJR-Data/matt-pocock-skills/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>` (database id, as above). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
-- **Count open blockers**: `gh api repos/FJR-Data/matt-pocock-skills/issues/<n> --jq .issue_dependencies_summary.blocked_by` (open blockers only; 0 means startable).
+- **Count open blockers**: `gh api repos/FJR-Data/matt-pocock-skills/issues/<n>/dependencies/blocked_by --jq '[.[] | select(.state == "open")] | length'` (0 means startable). Don't use `.issue_dependencies_summary.blocked_by`: it lags a few seconds behind a newly added edge.
 - **Comment on an issue**: `gh api repos/FJR-Data/matt-pocock-skills/issues/<n>/comments -F body=@<file>`.
 - **Apply / remove labels**: `gh api repos/FJR-Data/matt-pocock-skills/issues/<n>/labels -f 'labels[]=<label>'` / `gh api -X DELETE repos/FJR-Data/matt-pocock-skills/issues/<n>/labels/<label>` (URL-encode the label, e.g. `wayfinder%3Amap`).
 - **Create a label**: check with `gh api repos/FJR-Data/matt-pocock-skills/labels/<label>` (404 means missing), then `gh api repos/FJR-Data/matt-pocock-skills/labels -f name=<label> -f color=<hex-without-#>`.
