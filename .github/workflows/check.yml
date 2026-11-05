@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,7 +27,7 @@ jobs:
           node-version: 22
 
       - name: Repo invariants
-        run: node scripts/check-repo.mjs --base "origin/$BASE_REF"
+        run: node scripts/check-repo.mjs --base "origin/${BASE_REF:-main}"
         env:
           BASE_REF: ${{ github.base_ref }}
 
