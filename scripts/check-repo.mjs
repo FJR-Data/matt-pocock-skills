@@ -104,7 +104,7 @@ if (baseIndex !== -1) {
   let file = "";
   for (const line of diff.split("\n")) {
     if (line.startsWith("+++ ")) file = line.slice(6);
-    else if (line.startsWith("+") && line.includes("—")) fail(`${file}: em-dash on an added line: ${line.slice(1).trim()}`);
+    else if (line.startsWith("+") && line.includes("\u2014")) fail(`${file}: em-dash on an added line: ${line.slice(1).trim()}`);
   }
 }
 
