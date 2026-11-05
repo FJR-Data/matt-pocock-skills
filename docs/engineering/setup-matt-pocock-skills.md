@@ -40,11 +40,12 @@ The tracker options:
 | Option | Where issues live | Needs |
 | --- | --- | --- |
 | **GitHub** | the repo's GitHub Issues | the `gh` CLI |
+| **GitHub (REST only)** | the repo's GitHub Issues | the `gh` CLI, through `gh api` REST calls only; proposed when GitHub's GraphQL is refused, as in Claude Code cloud sessions |
 | **GitLab** | the repo's GitLab Issues | the `glab` CLI |
 | **Local markdown** | files under `.scratch/<feature>/` in this repo | nothing, not even a remote |
 | **Other** | wherever you say | one paragraph from you describing the workflow |
 
-The first three ship as templates in the skill and work out of the box. Local markdown is a full option, not a fallback. The skill supports a solo project with no remote. One caveat: don't use local markdown if you use GitHub. They are alternatives, so pick one.
+The first four ship as templates in the skill and work out of the box. Local markdown is a full option, not a fallback. The skill supports a solo project with no remote. One caveat: don't use local markdown if you use GitHub. They are alternatives, so pick one.
 
 "Other" is a full option too. It is how Jira, Linear, Azure DevOps and Beads all work. You describe the workflow, the skill records your prose in `docs/agents/issue-tracker.md`, and the downstream skills follow the prose. Users have already built this: a Jira-over-[MCP](https://www.aihero.dev/ai-coding-dictionary/mcp) variant, a Gitea CLI shaped like `gh`, a hand-built local dashboard.
 
@@ -64,10 +65,14 @@ This is a known gap, and still open. The file-selection rule is "edit `CLAUDE.md
 
 **It didn't create my triage labels.**
 
-It doesn't. `docs/agents/triage-labels.md` is a *mapping*: it tells `/triage` which strings in your tracker correspond to the five canonical roles. It does not run `gh label create`. On a fresh GitHub repo the labels do not exist yet, and users have filed this as a bug more than once. Two consequences:
+On GitHub and GitLab it creates each configured triage label the tracker lacks, once the triage-label question has run. Users filed the missing labels as a bug more than once, on a fresh GitHub repo where none existed yet. `docs/agents/triage-labels.md` itself is a *mapping*: it tells `/triage` which strings in your tracker correspond to the five canonical roles. Two consequences:
 
 - If your tracker already uses the canonical names, the mapping is an identity table and there is nothing to configure. That is the intended common case, not a missing step.
-- This skill does not create [wayfinder](https://aihero.dev/skills-wayfinder)'s `wayfinder:map` and `wayfinder:<type>` labels either, and `gh issue create --label <missing>` fails instead of creating the label. Create them by hand before the first wayfinder run on a GitHub repo.
+- This skill does not create [wayfinder](https://aihero.dev/skills-wayfinder)'s `wayfinder:map` and `wayfinder:<type>` labels, and `gh issue create --label <missing>` fails instead of creating the label. Create them by hand before the first wayfinder run on a GitHub repo. The REST-only template tells the agent to create each one on first use.
+
+**`gh issue` fails with HTTP 403 in a cloud session.**
+
+Claude Code cloud sessions refuse GitHub's GraphQL API, and `gh issue`, `gh pr`, `gh repo view` and `gh label` all go through it. Plain `gh api` REST calls still work. Setup probes for this and proposes **GitHub (REST only)**, whose template drives every operation through `gh api` with the repo named explicitly. The same file works locally, so one repo serves both. A repo set up earlier with plain **GitHub** switches by re-running setup and picking the REST variant. On a fork, Issues starts disabled, and setup stops until you turn it on in the repo settings.
 
 **Can I configure the other skills' behaviour here ([grilling](https://www.aihero.dev/ai-coding-dictionary/grilling) cadence, question format, tone)?**
 
@@ -87,6 +92,7 @@ One long-standing complaint says yes, in these words: *"having a skill to set up
 - An `## Agent skills` section appears in the instruction file your harness reads, with a one-line summary pointing at each of those files.
 - The tracker it proposed matches the remote you use, and the label strings match labels that exist in your tracker.
 - Afterwards, `/to-tickets` publishes without asking you where issues live, and `/triage` applies labels rather than inventing them.
+- In a cloud session, `/to-tickets` publishes without an HTTP 403, because the tracker file drives everything through `gh api`.
 - Nothing in the skill files themselves changed. If setup edited a `SKILL.md`, something went wrong.
 
 ## Where it fits
