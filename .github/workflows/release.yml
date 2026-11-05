@@ -10,6 +10,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     name: Version
+    # Versioning belongs to upstream; forks sync plugins from main as-is.
+    if: github.repository == 'mattpocock/skills'
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -1,0 +1,35 @@
+name: Check
+
+# Required by the ruleset on main: a PR merges only when CLAUDE.md's
+# invariants hold, since main is what the plugin syncs to every session.
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Repo invariants
+        run: node scripts/check-repo.mjs --base "origin/${BASE_REF:-main}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+      - name: Plugin version in sync
+        run: npm run check-plugin-version

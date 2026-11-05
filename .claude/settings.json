@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__github__pull_request_read",
+      "Bash(node scripts/check-repo.mjs)",
+      "Bash(node scripts/check-repo.mjs *)",
+      "mcp__claude-code-remote__read_documentation",
+      "Bash(claude plugin validate *)",
+      "Bash(npm run check)"
+    ]
+  }
+}
